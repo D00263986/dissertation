@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Breed Classifier</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 700px; /* Set container width */
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label,
+        select,
+        input[type="submit"] {
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        select,
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            padding: 10px;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"].disabled {
+            background-color: #e0e0e0;
+            color: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .loader {
+            display: none;
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #3498db;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result {
+            margin-top: 20px;
+        }
+
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .image-preview {
+            display: none; /* Hide image preview by default */
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px;
+            width: 200px;
+            height: 200px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 1rem;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Upload a Dog Image to Detect the Breed</h1>
+        <form id="upload-form" enctype="multipart/form-data">
+            <label for="model">Select Model:</label>
+            <select name="model" id="model">
+                {% for model in models %}
+                <option value="{{ model }}" {% if model == "ensemble_xception_inceptionv3_nasnetmobile" %}selected{% endif %}>
+                    {{ model }}
+                </option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <input type="file" name="file" id="file" accept="image/*">
+            <input type="submit" value="Detect Breed" id="submit-button">
+            <div class="error-message" id="error-message"></div>
+        </form>
+
+        <div class="image-preview" id="image-preview">
+            <img id="selected-image" src="" alt="Selected Image">
+        </div>
+
+        <div class="loader" id="loader"></div>
+        <div class="result">
+            <h2 id="prediction-result" style="display: none;"></h2>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Set default value
+            $("#model").val("ensemble_xception_inceptionv3_nasnetmobile");
+
+            // Handle file input change event to show image preview
+            $("#file").on("change", function () {
+                var file = this.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $("#selected-image").attr("src", e.target.result);
+                        $("#image-preview").show(); // Show the image preview box
+                        $("#prediction-result").hide(); // Hide prediction result when file is selected
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    $("#selected-image").attr("src", "");
+                    $("#image-preview").hide(); // Hide the image preview box if no file
+                }
+
+                // Hide the prediction result when file input changes
+                $("#prediction-result").hide();
+            });
+
+            // Handle model change event
+            $("#model").on("change", function () {
+                var selectedModel = $(this).val();
+                if (selectedModel.toLowerCase().includes("inceptionresnetv2")) {
+                    $("#submit-button").prop("disabled", true).addClass("disabled");
+                    $("#error-message").text("This model contains 'inceptionresnetv2' and has a bug that prevents it from getting deployed online. Please choose a different model.").show();
+                } else {
+                    $("#submit-button").prop("disabled", false).removeClass("disabled");
+                    $("#error-message").hide();
+                }
+            });
+
+            // Handle form submission with AJAX
+            $("#upload-form").on("submit", function (event) {
+                event.preventDefault();
+
+                var formData = new FormData();
+                var fileInput = $("#file")[0];
+                var model = $("#model").val();
+
+                if (fileInput.files.length === 0) {
+                    alert("Please select a file");
+                    return;
+                }
+
+                formData.append("file", fileInput.files[0]);
+                formData.append("model", model);
+
+                // Disable the form and show loader
+                $("input, select").addClass("disabled");
+                $("#loader").show();
+                $("#prediction-result").hide(); // Hide prediction result while waiting for response
+
+                // AJAX request to send the file and model selection to Flask
+                $.ajax({
+                    url: "/",
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        // Hide loader and enable the form
+                        $("#loader").hide();
+                        $("input, select").removeClass("disabled");
+
+                        // Show prediction result
+                        $("#prediction-result").text("The predicted breed is: " + response.breed);
+                        $("#prediction-result").show();
+                    },
+                    error: function (xhr, status, error) {
+                        // Hide loader and enable the form
+                        $("#loader").hide();
+                        $("input, select").removeClass("disabled");
+
+                        $("#prediction-result").text("Error: " + xhr.responseText);
+                        $("#prediction-result").show();
+                    }
+                });
+            });
+
+            // Initialize the model change event
+            $("#model").trigger("change");
+        });
+    </script>
+</body>
+
+</html>
