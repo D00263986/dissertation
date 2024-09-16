@@ -11,6 +11,11 @@ When you run the training scripts, it trains models and saves them in this folde
 I couldn't upload all the saved models here because they're very large ( >5 GB in size). But you can run the scripts to produce them, though
 I put one small model in this folder, just in case anyone wants to quickly test out the web application.
 
+If you want the saved models without running train.ipynb and train_ensemble.ipynb, I've uploaded a zip file on my google drive with all the models ready to use.
+You can download it from here: https://drive.google.com/file/d/1MhQgN23XxUVjL36I93Z9B3UAl-SiV5nS/view?usp=sharing
+Just unzip the models.zip file and copy all the .h5 files from the extracted folder into the **models** folder from the repository.
+Then run the web app and all models from the folder should be available in the dropdown on the app's UI
+
 ## webapp
 Contains the webapp code. There are 2 files of importance
 1) **app.py** is the backend script that recieves XHR requests from the frontend, processes the image uploaded by the user and returns a response containing the detected dog breed
