@@ -18,7 +18,7 @@ Contains the webapp code. There are 2 files of importance
 
 To run the web app, simply run the following command
 ```
-python <path_to_app,py>
+python <path_to_app.py>
 ```
 
 For example
