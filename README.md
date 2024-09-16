@@ -26,6 +26,11 @@ For example
 python "C:\Thesis\webapp\app.py"
 ```
 
+Then visit the following URL in your web browser 
+```
+http://localhost
+```
+
 ## images
 This folder contains the dataset. There are two subfolders
 1) **train** - contains training images
