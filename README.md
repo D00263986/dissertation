@@ -44,7 +44,7 @@ This folder contains the dataset. There are two subfolders
 Dataset was split 80-20 between training and validation using the **split_data.py** script in the training_scripts folder
 
 # Online Deployment
-I've deployed the web app online on on a Microsoft Azure Compute VM instance.
+I've deployed the web app online on a Microsoft Azure Compute VM instance.
 The app can be accessed on the URL: http://jobinjosethesis.xyz/
 
 
