@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify, render_template, make_response
 import os
-from keras.models import load_model
-from keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 import numpy as np
-from keras.utils import custom_object_scope
 import json
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
@@ -92,4 +91,4 @@ def index():
     return render_template("index.html", models=model_files.keys(), last_model=last_model)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=80)
